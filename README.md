@@ -1,81 +1,111 @@
-# Delete-botnet
-Guide to delete botnet (scan and delete)
-Below is the raw Markdown source of the full playbook.
-Copy-paste it into any Markdown viewer (GitHub, Obsidian, VS Code, etc.) to see the formatted version.
+Below is the pure Markdown source of the Windows botnet-removal tutorial, translated into English and kept beginner-friendly.
+Copy-paste the entire block into any Markdown viewer (GitHub, Obsidian, VS Code…) to see the formatted version.
 
-# Botnet Response Playbook (2025)
+# Eradicating a Botnet on Windows – Simplified Guide (2025)
 
-## 1 – Get the ground ready
-
-| Goal | Why it matters | Recommended actions / tools |
-|------|----------------|-----------------------------|
-| **Back up and inventory first** | You may need to rebuild or analyse offline. | Air-gapped backup; list every device, OS version, role and IP address. |
-| **Patch everything** | Shrinks the attack surface and stops re-infection during cleanup. | Windows Update; `apt upgrade` / `dnf upgrade`; IoT firmware. |
-| **Plan for isolation** | Lets you quarantine a host instantly. | Create quarantine VLANs, firewall rules, ACLs. |
+> 🎯 Goal: clean your PC without advanced technical knowledge.
 
 ---
 
-## 2 – Detect: scanners & indicators
-
-| Scope | Key indicators | 2025-era tools that work |
-|-------|----------------|--------------------------|
-| **Single workstation / server** | Unknown processes or services, CPU/RAM spikes, unusual outbound connections (`netstat -an`, `Get-NetTCPConnection`). | **MSRT** (Malicious Software Removal Tool, standalone)<br>**eScan CERT-In Bot Removal Toolkit** (portable)<br>**SUPERAntiSpyware Portable** (second opinion) |
-| **Network-wide** | Traffic to C2 hosts, DNS NXDOMAIN bursts, beaconing patterns. | **Zeek** or **Suricata** with Emerging-Threats rules; **Snort 3**; SIEM dashboards (ELK, Splunk). |
-| **Cloud / web tier** | Automated requests, credential-stuffing, scraping spikes. | Bot-management platforms such as DataDome, HUMAN, Imperva, Netacea. |
-
-> **Quick Windows trick:** Boot in *Safe Mode with Networking*, run **MSRT** first, then a portable second engine (eScan or Malwarebytes); malware has far less room to hide.
+## 🛠️ Hardware & software you’ll need
+1. **A USB stick** (8 GB or larger) — handy for an “offline” scan.
+2. **A clean Internet connection** (from another PC) to download the tools:
+   - Windows **Malicious Software Removal Tool** (MSRT, KB890830)  
+   - **eScan CERT-In Bot Removal Toolkit** (portable, free)
 
 ---
 
-## 3 – Contain right now
-
-1. **Unplug or VLAN-shift** the suspect host (pull Wi-Fi, yank the cable, or move it to “quarantine”).  
-2. Disable remote-admin channels (RDP, SSH) except from investigation IPs.  
-3. **Preserve evidence:** memory dump (FTK Imager, Magnet RAM Capture), log export, or disk image for severe cases.
-
-Rapid isolation limits spread while keeping artefacts for forensics.
+## Step 1 — Disconnect & back up essentials
+- Unplug the Ethernet cable or disable Wi-Fi on the infected PC.  
+- Copy your important documents to an external drive.
 
 ---
 
-## 4 – Eradicate cleanly
-
-| Step | What to do |
-|------|------------|
-| **Offline analysis** | Mount the drive in an isolated VM with no network; scan with multiple AV/EDR engines. |
-| **Manual removal (advanced)** | • Delete rogue services, Run/RunOnce keys, scheduled tasks, rootkit drivers.<br>• Inspect `C:\Windows\System32\drivers\etc\hosts`, firewall rules, proxy settings. |
-| **Automation option** | Academic tool **ECHO** (released Apr 2025) hijacks many botnets’ own update logic to uninstall them in minutes; currently SOC-only but promising. |
-| **Re-image if in doubt** | If firmware might be tampered: format, deploy a known-good image, update UEFI/BIOS; for IoT, reflash or factory-reset. |
+## Step 2 — Update Windows
+1. **Settings › Windows Update › Check for updates**.  
+2. Install *all* available patches, then restart.  
+   *Why?* Many botnets reinfect through already-patched vulnerabilities.
 
 ---
 
-## 5 – Harden so it can’t return
-
-1. **Continuous patching** (WSUS, Ansible, MDM).  
-2. **MFA everywhere**, rotate passwords, protect SSH keys with passphrases.  
-3. **Least privilege** (GPO, `sudoers`).  
-4. **Real-time monitoring:** feed Zeek/Suricata into a SIEM with C2-beacon alerts.  
-5. **WAF / bot-management** for public apps (DataDome, Imperva Sonar, etc.).  
-6. **User awareness**: phishing drills, macro blocking, security briefings.
+## Step 3 — Boot into “Safe Mode with Networking”
+1. **Win + I › System › Recovery › Advanced start-up › Restart now**.  
+2. Troubleshoot › Advanced options › Start-up settings › Restart.  
+3. Choose **[4] Safe Mode with Networking**.
 
 ---
 
-## 6 – When to bring in an expert
-
-- Critical infrastructure or evidence of a persistent APT.  
-- Firmware-level rootkits, suspicious encryption, tampered boot loaders.  
-- Legal / regulatory pressure (GDPR, NIS 2, PCI-DSS) requiring certified forensic reports.
-
----
-
-### One-page “express” checklist
-
-- [ ] Offline backup completed  
-- [ ] Hosts quarantined / VLAN isolation active  
-- [ ] MSRT + second scanner finished  
-- [ ] Logs and memory dumps secured  
-- [ ] Patches applied, passwords rotated  
-- [ ] Post-cleanup network monitoring live
+## Step 4 — Quick scan with MSRT
+1. Run **msert.exe** (no installation required).  
+2. Select **Full Scan** and wait for completion.  
+   > MSRT is updated monthly by Microsoft and removes the majority of known malware.
 
 ---
 
-**Bottom line:** use layered detection (EDR + IDS/IPS), isolate at the first sign of compromise, eradicate with proven cleaning tools—or, for stubborn cases, advanced methods such as the **ECHO** framework. Finish with systematic hardening and continuous monitoring; that’s the only way to ensure a wiped botnet stays gone.
+## Step 5 — Deep scan with Microsoft Defender
+- Open **Windows Security › Virus & threat protection**.  
+- Click **Scan options › Full scan › Scan now**.  
+- Remove or quarantine everything it detects.
+
+**Still infected?**  
+Run **Microsoft Defender Offline** instead:  
+Select **Offline scan**; the PC reboots, scans before Windows starts, and reboots again automatically.
+
+---
+
+## Step 6 — Second opinion (optional but recommended)
+1. Download the **eScan CERT-In Bot Removal Toolkit** on a clean PC.  
+2. Copy the executable to your USB stick → run it in Safe Mode.  
+3. Select **Scan & Clean** and let it finish.
+
+---
+
+## Step 7 — Manually remove persistent start-ups (advanced)
+- **Registry**: `HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run`  
+- **Scheduled Tasks**: *Task Scheduler* › Library  
+> Delete any unknown entry (random names, suspicious folders).  
+  Search the Web first if you’re unsure.
+
+---
+
+## Step 8 — Final reboot & checks
+1. Reboot into normal mode.  
+2. Run a **Defender Quick Scan**: result should be *0 threats*.  
+3. Watch Task Manager: CPU/Network usage should stay low when idle.
+
+---
+
+## Step 9 — Prevent a relapse
+| Action | How to do it |
+|--------|--------------|
+| **Enable automatic updates** | Windows Update › Advanced options |
+| **Keep Windows Firewall on** | Windows Security › Firewall & network protection |
+| **Use MFA & strong passwords** | Microsoft account or local account + password manager |
+| **Back up regularly** | File History, OneDrive, or a full-image backup |
+
+---
+
+## ⏱️ Quick-Check List (print me!)
+- [ ] Internet disconnected, backups done  
+- [ ] Windows updates applied  
+- [ ] MSRT scan completed  
+- [ ] Defender scan (or Offline scan) → no threats  
+- [ ] eScan toolkit scan (optional) clean  
+- [ ] Firewall & auto-updates enabled  
+
+---
+
+### Fast FAQ
+
+**Q : Do I need a paid antivirus?**  
+Not mandatory: Defender + MSRT cover 99 % of home scenarios.
+
+**Q : My PC feels slow right after cleanup — normal?**  
+Yes. Defender re-scans files in the background for about an hour. Let it finish.
+
+**Q : Why Safe Mode?**  
+It prevents most malware from injecting itself at start-up, making removal much easier.
+
+---
+
+*Guide written for absolute beginners; no complicated command lines, only official Microsoft tools plus one portable auxiliary scanner.*
